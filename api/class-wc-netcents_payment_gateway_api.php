@@ -121,7 +121,6 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
 				'default' => __( '', 'wcwcCpg1' )
 			)
         );
-
     }
 
     /* Process the payment and return the result. */
