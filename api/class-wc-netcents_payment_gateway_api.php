@@ -39,6 +39,8 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
         else
             add_action( 'woocommerce_update_options_payment_gateways', array( &$this, 'process_admin_options' ) );
 
+        // Hooks.
+        add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 
     }
 
@@ -50,6 +52,27 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
     	<table class="form-table">
     		<?php $this->generate_settings_html(); ?>
 		</table> <?php
+    }
+
+    public function admin_notices() {
+        global $netcents_for_wc, $pagenow, $wpdb;
+
+        if ( $this->enabled == 'no') {
+            return false;
+        }
+
+        // Check for API Keys
+        if ( ! $this->settings['api_key'] && ! $this->settings['secret_key'] ) {
+            echo '<div class="error"><p>' . __( 'Beanstream needs Merchand id & API pass Keys to work, please find your Merchand id and API pass Keys in the <a href="https://www.beanstream.com/admin/sDefault.asp" target="_blank">Beanstream accounts section</a>.', 'beanstream-for-woocommerce' ) . '</p></div>';
+            return false;
+        }
+
+        // Force SSL on production
+        if ( get_option( 'woocommerce_force_ssl_checkout' ) == 'no' ) {
+            echo '<div class="error"><p>' . __( 'Beanstream needs SSL in order to be secure. Read more about forcing SSL on checkout in <a href="http://docs.woothemes.com/document/ssl-and-https/" target="_blank">the WooCommerce docs</a>.', 'beanstream-for-woocommerce' ) . '</p></div>';
+            return false;
+        }
+
     }
 
     function payment_fields() {
@@ -98,36 +121,30 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
 				'default' => __( '', 'wcwcCpg1' )
 			)
         );
-
     }
-
-
-
 
     /* Process the payment and return the result. */
 	function process_payment ($order_id) {
-        $msg['class']   = 'error';
-        $msg['message'] = "Thank you for shopping with us. However, the transaction has been declined.";
+        $order = new WC_Order( $order_id );
 		global $woocommerce;
 		$paramsData = $_POST;
-		$order = new WC_Order( $order_id );
-        $order->update_status( 'on-hold', __( 'Awaiting offline payment', 'wc-gateway-offline' ) );
         $order_amount = $order->get_total();
-
-        if ($this->attempt_payment($order_amount, $paramsData)) {
-            if ( function_exists( 'wc_add_notice' ) )
-            {
-                wc_add_notice( $msg['message'], $msg['class'] );
-
-            }
+        $payment_attempt = $this->attempt_payment($order_amount, $paramsData);
+        if ($payment_attempt != false) {
+            wc_add_notice( __('Payment error: ', 'woothemes') . $payment_attempt['message'], 'error' );
+            return;
         } else {
+            $order->payment_complete();
+            $order->update_status( 'completed' );
             return array(
                 'result' 	=> 'success',
-                'redirect'	=> add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('thanks'))))
+                'redirect' => $this->get_return_url( $order )
+
             );
         }
 
 	}
+
     function attempt_payment ($order_amount, $paramsData) {
         $number = str_replace(' ', '', $paramsData['ncgw1-card-number']);
         $date = array_map('trim', explode('/', $paramsData['ncgw1-card-expiry']));
@@ -164,11 +181,9 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $server_output = curl_exec ($ch);
         curl_close ($ch);
-
         $json = json_decode($server_output, true);
-        print_r($json);
         if ($json['status'] == 0) {
-            return true;
+            return $json;
         }
         return false;
     }
