@@ -55,21 +55,13 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
     }
 
     public function admin_notices() {
-        global $netcents_for_wc, $pagenow, $wpdb;
-
         if ( $this->enabled == 'no') {
             return false;
         }
 
         // Check for API Keys
-        if ( ! $this->settings['api_key'] && ! $this->settings['secret_key'] ) {
-            echo '<div class="error"><p>' . __( 'Beanstream needs Merchand id & API pass Keys to work, please find your Merchand id and API pass Keys in the <a href="https://www.beanstream.com/admin/sDefault.asp" target="_blank">Beanstream accounts section</a>.', 'beanstream-for-woocommerce' ) . '</p></div>';
-            return false;
-        }
-
-        // Force SSL on production
-        if ( get_option( 'woocommerce_force_ssl_checkout' ) == 'no' ) {
-            echo '<div class="error"><p>' . __( 'Beanstream needs SSL in order to be secure. Read more about forcing SSL on checkout in <a href="http://docs.woothemes.com/document/ssl-and-https/" target="_blank">the WooCommerce docs</a>.', 'beanstream-for-woocommerce' ) . '</p></div>';
+        if ( ! $this->settings['api-key'] && ! $this->settings['secret-key'] ) {
+            echo '<div class="error"><p>' . __( 'NetCents needs API Key & Secret Key in order to work, please find your API key and Secret at <a href="https://www.google.com.com" target="_blank">NetCents Authentication Keys</a>.', 'beanstream-for-woocommerce' ) . '</p></div>';
             return false;
         }
 
