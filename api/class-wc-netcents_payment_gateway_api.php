@@ -140,10 +140,12 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
             return array(
                 'result' 	=> 'success',
                 'redirect' => $this->get_return_url( $order )
+
             );
         }
 
 	}
+
     function attempt_payment ($order_amount, $paramsData) {
         $number = str_replace(' ', '', $paramsData['ncgw1-card-number']);
         $date = array_map('trim', explode('/', $paramsData['ncgw1-card-expiry']));
