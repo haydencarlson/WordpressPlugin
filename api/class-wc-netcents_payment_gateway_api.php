@@ -115,13 +115,43 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
         );
     }
 
+    public function validate_fields() {
+
+        $form = array(
+            'card-number'   => isset( $_POST['ncgw1-card-number'] ) ? $_POST['ncgw1-card-number'] : '',
+            'card-expiry'   => isset( $_POST['ncgw1-card-expiry'] ) ? $_POST['ncgw1-card-expiry'] : '',
+            'card-cvc'      => isset( $_POST['ncgw1-card-cvc'] ) ? $_POST['ncgw1-card-cvc'] : '',
+        );
+
+        if ( $form['card-number'] == '' ) {
+            $field = __( 'Credit Card Number', 'beanstream-for-woocommerce' );
+            wc_add_notice( $this->get_form_error_message( $field, $form['card-number'] ), 'error' );
+        }
+        if ( $form['card-expiry'] == '' ) {
+            $field = __( 'Credit Card Expiration', 'beanstream-for-woocommerce' );
+            wc_add_notice( $this->get_form_error_message( $field, $form['card-expiry'] ), 'error' );
+        }
+        if ( $form['card-cvc'] == '' ) {
+            $field = __( 'Credit Card CVC', 'beanstream-for-woocommerce' );
+            wc_add_notice( $this->get_form_error_message( $field, $form['card-cvc'] ), 'error' );
+        }
+    }
+
+    protected function get_form_error_message( $field, $type = 'undefined' ) {
+
+        if ( $type === 'invalid' ) {
+            return sprintf( __( 'Please enter a valid %s.', 'beanstream-for-woocommerce' ), "<strong>$field</strong>" );
+        } else {
+            return sprintf( __( '%s is a required field.', 'beanstream-for-woocommerce' ), "<strong>$field</strong>" );
+        }
+    }
+
     /* Process the payment and return the result. */
 	function process_payment ($order_id) {
         $order = new WC_Order( $order_id );
 		global $woocommerce;
-		$paramsData = $_POST;
         $order_amount = $order->get_total();
-        $payment_attempt = $this->attempt_payment($order_amount, $paramsData);
+        $payment_attempt = $this->attempt_payment($order_amount, $_POST);
         if ($payment_attempt != false) {
             wc_add_notice( __('Payment error: ', 'woothemes') . $payment_attempt['message'], 'error' );
             return;
@@ -137,28 +167,28 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
 
 	}
 
-    function attempt_payment ($order_amount, $paramsData) {
-        $number = str_replace(' ', '', $paramsData['ncgw1-card-number']);
-        $date = array_map('trim', explode('/', $paramsData['ncgw1-card-expiry']));
+    function attempt_payment ($order_amount, $postData) {
+        $number = str_replace(' ', '', $postData['ncgw1-card-number']);
+        $date = array_map('trim', explode('/', $postData['ncgw1-card-expiry']));
         $api_key = $this->api_key;
         $secret_key = $this->secret_key;
         $postData = json_encode(array(
-            'first_name' => $paramsData['billing_first_name'],
-            'last_name' => $paramsData['billing_last_name'],
-            'email' => $paramsData['billing_email'],
-            'address' => $paramsData['billing_address_1'],
-            'city' => $paramsData['billing_city'],
-            'state' => $paramsData['billing_state'],
-            'country' => $paramsData['billing_country'],
-            'zip' => $paramsData['billing_postcode'],
-            'phone' => $paramsData['billing_phone'],
+            'first_name' => $postData['billing_first_name'],
+            'last_name' => $postData['billing_last_name'],
+            'email' => $postData['billing_email'],
+            'address' => $postData['billing_address_1'],
+            'city' => $postData['billing_city'],
+            'state' => $postData['billing_state'],
+            'country' => $postData['billing_country'],
+            'zip' => $postData['billing_postcode'],
+            'phone' => $postData['billing_phone'],
             'ip' => $_SERVER['REMOTE_ADDR'],
             'currency' => "CAD",
             'card' => array(
                 'number' => $number,
                 'expiry_month' => $date[0],
                 'expiry_year' => $date[1],
-                'ccv' => $paramsData['ncgw1-card-cvc']
+                'ccv' => $postData['ncgw1-card-cvc']
             ),
             'invoice_number' => '1',
             'amount' => $order_amount
