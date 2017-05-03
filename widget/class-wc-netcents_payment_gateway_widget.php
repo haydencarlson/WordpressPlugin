@@ -16,7 +16,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         $this->id             = 'ncgw2';
         $this->icon           = apply_filters( 'woocommerce_wcCpg2_icon', '' );
         $this->has_fields     = false;
-        $this->method_title   = __( 'NetCents', 'wcwcCpg2' );
+        $this->method_title   = __( 'NetCents Widget', 'wcwcCpg2' );
         $this->order_button_text  = __( 'Proceed to NetCents', 'woocommerce' );
 
         // Load the form fields.
@@ -30,6 +30,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         $this->description    = $this->settings['description'];
         $this->api_key    = $this->settings['api-key'];
         $this->secret_key    = $this->settings['secret-key'];
+        $this->callback_url    = $this->settings['callback-url'];
 		$this->instructions       = $this->get_option( 'instructions' );
 		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
 
@@ -39,14 +40,12 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         else
             add_action( 'woocommerce_update_options_payment_gateways', array( &$this, 'process_admin_options' ) );
 
-
     }
-
 
     /* Admin Panel Options.*/
 	function admin_options() {
 		?>
-		<h3><?php _e('NetCents','ncgw2'); ?></h3>
+		<h3><?php _e('NetCents Widget','ncgw2'); ?></h3>
     	<table class="form-table">
     		<?php $this->generate_settings_html(); ?>
 		</table> <?php
@@ -99,26 +98,57 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
                 'type' => 'text',
                 'description' => __( 'Your Secret key.', 'wcwcCpg1' ),
                 'default' => __( '', 'wcwcCpg1' )
+            ),'callback-url' => array(
+                'title' => __( 'Callback URL', 'wcwcCpg1' ),
+                'type' => 'text',
+                'description' => __( 'Where customer will be redirected after successful checkout', 'wcwcCpg1' ),
+                'default' => __( '', 'wcwcCpg1' )
             )
         );
 
     }
 
+    function access_widget($order) {
+        $order_amount = $order->get_total();
+        $api_key = $this->api_key;
+        $secret = $this->secret_key;
+        $callback_url = $this->callback_url;
+        $date = new DateTime();
+        $parameters = array(
+            'nonce' => $date->getTimestamp(),
+            'merchant_id' => '1',
+            'callback_url' => $callback_url
+        );
+        $s = hash_hmac('sha256', base64_encode(JSON_encode($parameters)), $secret, true);
+        $signature = preg_replace('/\s+/', '', base64_encode($s));
+        $parameters = preg_replace('/\s+/', '', base64_encode(JSON_encode($parameters)));
+        $data = array(
+            'total_price' => $order_amount,
+            'currency' => 'CAD',
+            'payer_id' => 'mehdi@glsys.com'
+        );
+        $data = preg_replace('/\s+/', '', base64_encode(JSON_encode($data)));
+        ?>
+        <script>
+            var signature = '<?php echo $signature; ?>';
+            var parameters = '<?php echo $parameters; ?>';
+            var apiKey = '<?php echo $api_key; ?>';
+            var data = '<?php echo $data; ?>';
+        </script>
+        <?php
+    }
 
     /* Process the payment and return the result. */
 	function process_payment ($order_id) {
 		global $woocommerce;
+        $order = new WC_Order( $order_id );
+        ?><script>
+        $('#place_order').on('click', function() {
+            alert('were here');
+        });
+        </script> <?php
+		$request = $this->access_widget($order);
 
-
-
-		// Mark as on-hold
-		$order->update_status('on-hold', __( 'Your order wont be shipped until the funds have cleared in our account.', 'woocommerce' ));
-
-		// Reduce stock levels
-		$order->reduce_order_stock();
-
-		// Remove cart
-		$woocommerce->cart->empty_cart();
 
 		// Return thankyou redirect
 		return array(
