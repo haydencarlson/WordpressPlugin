@@ -33,6 +33,9 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         $this->callback_url    = $this->settings['callback-url'];
 		$this->instructions       = $this->get_option( 'instructions' );
 		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
+		$this->widget_access_data;
+		$this->widget_access_token;
+
         // Actions.
         if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) )
             add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( &$this, 'process_admin_options' ) );
@@ -106,49 +109,39 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
 
     }
 
-    function access_widget($order) {
-        $order_amount = $order->get_total();
-        $api_key = $this->api_key;
-        $secret = $this->secret_key;
-        $callback_url = $this->callback_url;
-        $date = new DateTime();
-        $parameters = array(
-            'nonce' => $date->getTimestamp(),
-            'merchant_id' => '1',
-            'callback_url' => $callback_url
-        );
-        $s = hash_hmac('sha256', base64_encode(JSON_encode($parameters)), $secret, true);
-        $signature = preg_replace('/\s+/', '', base64_encode($s));
-        $parameters = preg_replace('/\s+/', '', base64_encode(JSON_encode($parameters)));
-        $data = array(
-            'total_price' => $order_amount,
-            'currency' => 'CAD',
-            'payer_id' => 'mehdi@glsys.com'
-        );
-        $data = preg_replace('/\s+/', '', base64_encode(JSON_encode($data)));
-        ?>
-        <script>
-            var signature = '<?php echo $signature; ?>';
-            var parameters = '<?php echo $parameters; ?>';
-            var apiKey = '<?php echo $api_key; ?>';
-            var data = '<?php echo $data; ?>';
-        </script>
-        <?php
+    public function get_cancel_order_url_raw( $redirect = '' ) {
+        return apply_filters( 'woocommerce_get_cancel_order_url_raw', add_query_arg( array(
+            'cancel_order' => 'true',
+            'order'        => $this->get_order_key(),
+            'order_id'     => $this->get_id(),
+            'redirect'     => $redirect,
+            '_wpnonce'     => wp_create_nonce( 'woocommerce-cancel_order' ),
+        ), $this->get_cancel_endpoint() ) );
     }
 
-    /* Process the payment and return the result. */
-	function process_payment ( $order_id ) {
-		global $woocommerce;
-        $order = new WC_Order( $order_id );
-        $order_amount = $order->get_total();
+    public function get_cancel_endpoint() {
+        $cancel_endpoint = wc_get_page_permalink( 'cart' );
+        if ( ! $cancel_endpoint ) {
+            $cancel_endpoint = home_url();
+        }
+
+        if ( false === strpos( $cancel_endpoint, '?' ) ) {
+            $cancel_endpoint = trailingslashit( $cancel_endpoint );
+        }
+
+        return $cancel_endpoint;
+    }
+
+    function request_access ( $order ) {
+        $cancel_url = esc_url_raw( $order->get_cancel_order_url_raw());
+        $callback_url = $this->get_return_url( $order );
         $api_key = $this->api_key;
         $secret = $this->secret_key;
-        $callback_url = $this->callback_url;
+        $order_amount = $order->get_total();
         $date = new DateTime();
         $parameters = array(
             'nonce' => $date->getTimestamp(),
-            'merchant_id' => 1,
-            'callback_url' => $callback_url
+            'merchant_id' => 1
         );
         $s = hash_hmac('sha256', base64_encode(JSON_encode($parameters)), $secret, true);
         $signature = preg_replace('/\s+/', '', base64_encode($s));
@@ -156,9 +149,11 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         $data = array(
             'total_price' => $order_amount,
             'currency' => 'CAD',
-            'payer_id' => 'mehdi@glsys.com'
+            'payer_id' => 'mehdi@glsys.com',
+            'callback_url' => $callback_url,
+            'cancel_url' => $cancel_url
         );
-        $data = preg_replace('/\s+/', '', base64_encode(JSON_encode($data)));
+        $this->widget_access_data = preg_replace('/\s+/', '', base64_encode(JSON_encode($data)));
         $url = 'http://localhost:3000/merchant/authorize?api_key=' . $api_key;
 
         $ch = curl_init();
@@ -175,25 +170,34 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         );
         curl_setopt_array($ch, $curlOpts);
         $answer = curl_exec($ch);
-        // If there was an error, show it
-        if (curl_error($ch)) die(curl_error($ch));
-        curl_close($ch);
         $json = json_decode($answer, true);
-        $access_token = $json['access_token'];
 
-
-        try {
-            return array(
-                'result' => 'success',
-                'redirect' => 'http://localhost:3000/merchant/checkout?token=' . $access_token . '&data=' . $data . '&api_key=' . $api_key
-            );
-        } catch (Exception $ex) {
-            wc_add_notice(  $ex->getMessage(), 'error' );
+        if ($json['access_token'] != '') {
+            return $json['access_token'];
         }
-        return array(
-            'result' => 'failure',
-            'redirect' => ''
-        );
+        return false;
+    }
+    /* Process the payment and return the result. */
+	function process_payment ( $order_id ) {
+		global $woocommerce;
+        $order = new WC_Order( $order_id );
+        $access = $this->request_access($order);
+        if ($access != false) {
+            try {
+                return array(
+                    'result' => 'success',
+                    'redirect' => 'http://localhost:3000/merchant/checkout?token=' . $access . '&data=' . $this->widget_access_data . '&api_key=' . $this->api_key
+                );
+            } catch (Exception $ex) {
+                wc_add_notice(  $ex->getMessage(), 'error' );
+            }
+            return array(
+                'result' => 'Error processing request. Please try again later.',
+                'redirect' => ''
+            );
+        } else {
+            wc_add_notice(  'Error processing request. Please try again later.', 'error' );
+        }
 
 	}
 
