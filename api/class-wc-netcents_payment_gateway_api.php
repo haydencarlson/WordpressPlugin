@@ -70,6 +70,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
     function payment_fields() {
         $this->credit_card_form();
     }
+
     /* Initialise Gateway Settings Form Fields. */
     public function init_form_fields() {
     	global $woocommerce;
@@ -106,7 +107,8 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
 				'type' => 'text',
 				'description' => __( 'Your API key.', 'wcwcCpg1' ),
 				'default' => __( '', 'wcwcCpg1' )
-			),'secret-key' => array(
+			),
+            'secret-key' => array(
 				'title' => __( 'Secret Key', 'wcwcCpg1' ),
 				'type' => 'text',
 				'description' => __( 'Your Secret key.', 'wcwcCpg1' ),
