@@ -33,13 +33,11 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         $this->callback_url    = $this->settings['callback-url'];
 		$this->instructions       = $this->get_option( 'instructions' );
 		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
-
         // Actions.
         if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) )
             add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( &$this, 'process_admin_options' ) );
         else
             add_action( 'woocommerce_update_options_payment_gateways', array( &$this, 'process_admin_options' ) );
-
     }
 
     /* Admin Panel Options.*/
@@ -139,22 +137,64 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
     }
 
     /* Process the payment and return the result. */
-	function process_payment ($order_id) {
+	function process_payment ( $order_id ) {
 		global $woocommerce;
         $order = new WC_Order( $order_id );
-        ?><script>
-        $('#place_order').on('click', function() {
-            alert('were here');
-        });
-        </script> <?php
-		$request = $this->access_widget($order);
+        $order_amount = $order->get_total();
+        $api_key = $this->api_key;
+        $secret = $this->secret_key;
+        $callback_url = $this->callback_url;
+        $date = new DateTime();
+        $parameters = array(
+            'nonce' => $date->getTimestamp(),
+            'merchant_id' => 1,
+            'callback_url' => $callback_url
+        );
+        $s = hash_hmac('sha256', base64_encode(JSON_encode($parameters)), $secret, true);
+        $signature = preg_replace('/\s+/', '', base64_encode($s));
+        $parameters = preg_replace('/\s+/', '', base64_encode(JSON_encode($parameters)));
+        $data = array(
+            'total_price' => $order_amount,
+            'currency' => 'CAD',
+            'payer_id' => 'mehdi@glsys.com'
+        );
+        $data = preg_replace('/\s+/', '', base64_encode(JSON_encode($data)));
+        $url = 'http://localhost:3000/merchant/authorize?api_key=' . $api_key;
+
+        $ch = curl_init();
+        $curlOpts = array(
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => array(
+                "Content-Type: application/x-www-form-urlencoded",
+                "Origin: {$_SERVER["HTTP_ORIGIN"]}",
+                "X-Parameters: {$parameters}",
+                "X-Signature: {$signature}"
+            ),
+            CURLOPT_FOLLOWLOCATION => true
+        );
+        curl_setopt_array($ch, $curlOpts);
+        $answer = curl_exec($ch);
+        // If there was an error, show it
+        if (curl_error($ch)) die(curl_error($ch));
+        curl_close($ch);
+        $json = json_decode($answer, true);
+        $access_token = $json['access_token'];
 
 
-		// Return thankyou redirect
-		return array(
-			'result' 	=> 'success',
-			'redirect'	=> add_query_arg('key', $order->order_key, add_query_arg('order', $order_id, get_permalink(woocommerce_get_page_id('thanks'))))
-		);
+        try {
+            return array(
+                'result' => 'success',
+                'redirect' => 'http://localhost:3000/merchant/checkout?token=' . $access_token . '&data=' . $data . '&api_key=' . $api_key
+            );
+        } catch (Exception $ex) {
+            wc_add_notice(  $ex->getMessage(), 'error' );
+        }
+        return array(
+            'result' => 'failure',
+            'redirect' => ''
+        );
+
 	}
 
 
