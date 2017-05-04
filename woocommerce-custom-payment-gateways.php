@@ -1,11 +1,11 @@
 <?php
 /*
-Plugin Name: NetCents Payment Gateway
+Plugin Name: WooCommerce Payment Gateway
 Plugin URI: http://wordpress.org/plugins/wooCommerce-custom-payment-gateways/
 Description: Add Custom Payment Gateways for WooCommerce.
 Version: 1.0.0
-Author: HC
-Author URI: https://github.com/haydencarlson
+Author:
+Author URI: 
 License: GPLv2
 */
 
