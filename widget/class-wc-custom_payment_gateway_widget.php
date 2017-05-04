@@ -16,8 +16,8 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         $this->id             = 'ncgw2';
         $this->icon           = apply_filters( 'woocommerce_wcCpg2_icon', '' );
         $this->has_fields     = false;
-        $this->method_title   = __( 'NetCents Widget', 'wcwcCpg2' );
-        $this->order_button_text  = __( 'Proceed to NetCents', 'woocommerce' );
+        $this->method_title   = __( 'Custom Widget', 'wcwcCpg2' );
+        $this->order_button_text  = __( 'Proceed to Your Custom Gateway ', 'woocommerce' );
 
         // Load the form fields.
         $this->init_form_fields();
@@ -46,7 +46,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
     /* Admin Panel Options.*/
 	function admin_options() {
 		?>
-		<h3><?php _e('NetCents Widget','ncgw2'); ?></h3>
+		<h3><?php _e('Custom Gateway Widget','ncgw2'); ?></h3>
     	<table class="form-table">
     		<?php $this->generate_settings_html(); ?>
 		</table> <?php
@@ -67,7 +67,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
             'enabled' => array(
                 'title' => __( 'Enable/Disable', 'wcwcCpg2' ),
                 'type' => 'checkbox',
-                'label' => __( 'Enable NetCents Widget', 'wcwcCpg2' ),
+                'label' => __( 'Enable Custom Widget Gateway', 'wcwcCpg2' ),
                 'default' => 'no'
             ),
             'title' => array(
@@ -75,13 +75,13 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
                 'type' => 'text',
                 'description' => __( 'This controls the title which the user sees during checkout.', 'wcwcCpg2' ),
                 'desc_tip' => true,
-                'default' => __( 'NetCents Widget Payment', 'wcwcCpg2' )
+                'default' => __( 'Custom Widget Payment', 'wcwcCpg2' )
             ),
             'description' => array(
                 'title' => __( 'Description', 'wcwcCpg2' ),
                 'type' => 'textarea',
                 'description' => __( 'This controls the description which the user sees during checkout.', 'wcwcCpg2' ),
-                'default' => __( 'Pay with NetCents. Account Balance, Credit Card , Bitcoins and Ethereum', 'wcwcCpg2' )
+                'default' => __( 'Pay with your custom gateway widget. Account Balance, Credit Card , Bitcoins and Ethereum', 'wcwcCpg2' )
             ),
 			'instructions' => array(
 				'title' => __( 'Instructions', 'wcwcCpg2' ),
@@ -121,6 +121,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
 
     public function get_cancel_endpoint() {
         $cancel_endpoint = wc_get_page_permalink( 'cart' );
+
         if ( ! $cancel_endpoint ) {
             $cancel_endpoint = home_url();
         }
@@ -128,7 +129,6 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         if ( false === strpos( $cancel_endpoint, '?' ) ) {
             $cancel_endpoint = trailingslashit( $cancel_endpoint );
         }
-
         return $cancel_endpoint;
     }
 
@@ -177,6 +177,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         }
         return false;
     }
+
     /* Process the payment and return the result. */
 	function process_payment ( $order_id ) {
 		global $woocommerce;
@@ -200,7 +201,6 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         }
 
 	}
-
 
     /* Output for the order received page.   */
 	function thankyou() {

@@ -42,8 +42,8 @@ function custom_payment_gateway_load() {
 	
 	
     // Include the WooCommerce Custom Payment Gateways classes.
-    require_once plugin_dir_path( __FILE__ ) . 'api/class-wc-netcents_payment_gateway_api.php';
-    require_once plugin_dir_path( __FILE__ ) . 'widget/class-wc-netcents_payment_gateway_widget.php';
+    require_once plugin_dir_path( __FILE__ ) . 'api/class-wc-custom_payment_gateway_api.php';
+    require_once plugin_dir_path( __FILE__ ) . 'widget/class-wc-custom_payment_gateway_widget.php';
 }
 
 add_action( 'plugins_loaded', 'custom_payment_gateway_load', 0 );
