@@ -17,7 +17,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
         $this->id             = 'ncgw1';
         $this->icon           = '';
         $this->has_fields     = true;
-        $this->method_title   = __( 'NetCents Merchant API', 'ncgwApi' );
+        $this->method_title   = __( 'Custom Gateway Merchant API', 'ncgwApi' );
         $this->supports[] = 'default_credit_card_form';
         // Load the form fields.
         $this->init_form_fields();
@@ -48,7 +48,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
     /* Admin Panel Options.*/
 	function admin_options() {
 		?>
-		<h3><?php _e('Pay with NetCents API','wcwcCpg1'); ?></h3>
+		<h3><?php _e('Pay with Custom API','wcwcCpg1'); ?></h3>
     	<table class="form-table">
     		<?php $this->generate_settings_html(); ?>
 		</table> <?php
@@ -61,7 +61,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
 
         // Check for API Keys
         if ( ! $this->settings['api-key'] && ! $this->settings['secret-key'] ) {
-            echo '<div class="error"><p>' . __( 'NetCents needs API Key & Secret Key in order to work, please find your API key and Secret at <a href="https://www.google.com.com" target="_blank">NetCents Authentication Keys</a>.', 'beanstream-for-woocommerce' ) . '</p></div>';
+            echo '<div class="error"><p>' . __( 'You need the API Key & Secret Key in order to work, please find your API key and Secret at <a href="https://www.google.com.com" target="_blank">Custom Gateway Authentication Keys</a>.', 'beanstream-for-woocommerce' ) . '</p></div>';
             return false;
         }
 
