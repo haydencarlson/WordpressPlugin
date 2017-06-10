@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: NetCents Payment Gateway
-Plugin URI: http://wordpress.org/plugins/wooCommerce-custom-payment-gateways/
-Description: Add Custom Payment Gateways for WooCommerce.
+Plugin URI:
+Description: Net-Cents Woocommerce Payment Gateway. If you haven't set up your account please start here : <a>http://merchant.net-cents.com</a>
 Version: 1.0.0
-Author: HC
-Author URI: https://github.com/haydencarlson
+Author: NetCents
+Author URI: http://net-cents.com
 License: GPLv2
 */
 
@@ -19,15 +19,13 @@ function wcCpg_register_plugin_links($links, $file) {
 	return $links;
 }
 
-
-
 /* WooCommerce fallback notice. */
 function woocommerce_cpg_fallback_notice() {
-    echo '<div class="error"><p>' . sprintf( __( 'WooCommerce Custom Payment Gateways depends on the last version of %s to work!', 'wcCpg' ), '<a href="http://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>' ) . '</p></div>';
+    echo '<div class="error"><p>' . sprintf( __( 'WooCommerce Net-Cents Gateways depends on the last version of %s to work!', 'wcCpg' ), '<a href="http://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>' ) . '</p></div>';
 }
 
 /* Load functions. */
-function custom_payment_gateway_load() {
+function netcents_gateway_load() {
     if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
         add_action( 'admin_notices', 'woocommerce_cpg_fallback_notice' );
         return;
@@ -42,11 +40,11 @@ function custom_payment_gateway_load() {
 	
 	
     // Include the WooCommerce Custom Payment Gateways classes.
-    require_once plugin_dir_path( __FILE__ ) . 'api/class-wc-custom_payment_gateway_api.php';
-    require_once plugin_dir_path( __FILE__ ) . 'widget/class-wc-custom_payment_gateway_widget.php';
+    require_once plugin_dir_path( __FILE__ ) . 'api/class-wc-netcents_gateway_api.php';
+    require_once plugin_dir_path( __FILE__ ) . 'widget/class-wc-netcents_gateway_widget.php';
 }
 
-add_action( 'plugins_loaded', 'custom_payment_gateway_load', 0 );
+add_action( 'plugins_loaded', 'netcents_gateway_load', 0 );
 
 
 

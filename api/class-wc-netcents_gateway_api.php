@@ -17,10 +17,14 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
         $this->id             = 'ncgw1';
         $this->icon           = '';
         $this->has_fields     = true;
-        $this->method_title   = __( 'Custom Gateway Merchant API', 'ncgwApi' );
+        $this->method_title   = __( 'NetCents Merchant API', 'ncgwApi' );
         $this->supports[] = 'default_credit_card_form';
         // Load the form fields.
         $this->init_form_fields();
+        $this->supports = array(
+            'products',
+            'refunds'
+        );
 
         // Load the settings.
         $this->init_settings();
@@ -30,8 +34,8 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
         $this->description    = $this->settings['description'];
         $this->api_key    = $this->settings['api-key'];
         $this->secret_key    = $this->settings['secret-key'];
-		$this->instructions       = $this->get_option( 'instructions' );
-		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
+		    $this->instructions       = $this->get_option( 'instructions' );
+        $this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
 
         // Actions.
         if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) )
@@ -81,7 +85,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
 	    	foreach ( $woocommerce->shipping->load_shipping_methods() as $method ) {
 		    	$shipping_methods[ $method->id ] = $method->get_title();
 	    	}
-			
+
         $this->form_fields = array(
             'enabled' => array(
                 'title' => __( 'Enable/Disable', 'wcwcCpg1' ),
@@ -154,10 +158,11 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
 		global $woocommerce;
         $order_amount = $order->get_total();
         $payment_attempt = $this->attempt_payment($order_amount, $_POST);
-        if ($payment_attempt != false) {
+        if ($payment_attempt["status"] != 200) {
             wc_add_notice( __('Payment error: ', 'woothemes') . $payment_attempt['message'], 'error' );
             return;
         } else {
+            update_post_meta( $order_id, '_transaction_id', $payment_attempt["transaction_id"] );
             $order->payment_complete();
             $order->update_status( 'completed' );
             return array(
@@ -168,6 +173,51 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
         }
 
 	}
+
+	function process_refund ($order_id, $amount = NULL, $reason = '') {
+        $transaction_id = get_post_meta( $order_id, '_transaction_id');
+        $response = $this->attempt_refund($transaction_id);
+        if ($response["success"] == 0) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    function attempt_refund($transaction_id) {
+        $api_key = $this->api_key;
+        $secret_key = $this->secret_key;
+        $postData = json_encode(array(
+            'transaction_id' => $transaction_id
+        ));
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL,"http://localhost:3000/api/v1/wordpress_refund");
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_USERPWD, $api_key . ":" . $secret_key);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $server_output = curl_exec ($ch);
+        curl_close ($ch);
+        $json = json_decode($server_output, true);
+        return $json;
+    }
+
+    function check_cc($cc, $extra_check = false){
+        $cards = array(
+            "visa" => "(4\d{12}(?:\d{3})?)",
+            "mastercard" => "(5[1-5]\d{14})"
+        );
+        $names = array("Visa", "Mastercard");
+        $matches = array();
+        $pattern = "#^(?:".implode("|", $cards).")$#";
+        $result = preg_match($pattern, str_replace(" ", "", $cc), $matches);
+        if($extra_check && $result > 0){
+            $result = (validatecard($cc))?1:0;
+        }
+        return ($result>0)?$names[sizeof($matches)-2]:false;
+    }
 
     function attempt_payment ($order_amount, $postData) {
         $number = str_replace(' ', '', $postData['ncgw1-card-number']);
@@ -196,20 +246,17 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
             'amount' => $order_amount
         ));
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL,"http://localhost:3000/api/v1/payment");
+        curl_setopt($ch, CURLOPT_URL, "http://localhost:3000/api/v1/payment");
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_USERPWD, $api_key . ":" . $secret_key);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $server_output = curl_exec ($ch);
-        curl_close ($ch);
+        $server_output = curl_exec($ch);
+        curl_close($ch);
         $json = json_decode($server_output, true);
-        if ($json['status'] == 0) {
-            return $json;
-        }
-        return false;
+        return $json;
     }
     /* Output for the order received page.   */
 	function thankyou() {

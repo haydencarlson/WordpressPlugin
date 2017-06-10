@@ -16,8 +16,8 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         $this->id             = 'ncgw2';
         $this->icon           = apply_filters( 'woocommerce_wcCpg2_icon', '' );
         $this->has_fields     = false;
-        $this->method_title   = __( 'Custom Widget', 'wcwcCpg2' );
-        $this->order_button_text  = __( 'Proceed to Your Custom Gateway ', 'woocommerce' );
+        $this->method_title   = __( 'NetCents Widget', 'wcwcCpg2' );
+        $this->order_button_text  = __( 'Proceed to NetCents Gateway ', 'woocommerce' );
 
         // Load the form fields.
         $this->init_form_fields();
@@ -31,12 +31,13 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         $this->api_key    = $this->settings['api-key'];
         $this->secret_key    = $this->settings['secret-key'];
         $this->callback_url    = $this->settings['callback-url'];
-		$this->instructions       = $this->get_option( 'instructions' );
-		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
-		$this->widget_access_data;
-		$this->widget_access_token;
+    		$this->instructions       = $this->get_option( 'instructions' );
+    		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
+    		$this->widget_access_data;
+    		$this->widget_access_token;
 
         // Actions.
+        add_action('woocommerce_api_'.strtolower(get_class($this)), array(&$this, 'callback_handler'));
         if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) )
             add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( &$this, 'process_admin_options' ) );
         else
@@ -46,12 +47,27 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
     /* Admin Panel Options.*/
 	function admin_options() {
 		?>
-		<h3><?php _e('Custom Gateway Widget','ncgw2'); ?></h3>
+		<h3><?php _e('NetCents Widget','ncgw2'); ?></h3>
     	<table class="form-table">
     		<?php $this->generate_settings_html(); ?>
 		</table> <?php
     }
 
+    function callback_handler() {
+	    if (isset($_GET["order_id"])) {
+	        $id = $_GET["order_id"];
+            $order = wc_get_order( $id );
+            $order->payment_complete();
+            $order->update_status( 'completed' );
+            if ($_GET["status"] == 1) {
+                header('Location:'. $this->get_return_url( $order ));
+                exit();
+            } else {
+                header('Location:'. esc_url_raw( $order->get_cancel_order_url_raw()));
+                exit();
+            }
+        }
+    }
     /* Initialise Gateway Settings Form Fields. */
     public function init_form_fields() {
     	global $woocommerce;
@@ -62,7 +78,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
 	    	foreach ( $woocommerce->shipping->load_shipping_methods() as $method ) {
 		    	$shipping_methods[ $method->id ] = $method->get_title();
 	    	}
-			
+
         $this->form_fields = array(
             'enabled' => array(
                 'title' => __( 'Enable/Disable', 'wcwcCpg2' ),
@@ -132,16 +148,16 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         return $cancel_endpoint;
     }
 
-    function request_access ( $order ) {
+    function request_access ( $order, $order_id ) {
         $cancel_url = esc_url_raw( $order->get_cancel_order_url_raw());
-        $callback_url = $this->get_return_url( $order );
+        $callback_url = 'http://localhost/netcents_wordpress/?wc-api=wc_custom_payment_gateway_2&';
         $api_key = $this->api_key;
         $secret = $this->secret_key;
         $order_amount = $order->get_total();
         $date = new DateTime();
         $parameters = array(
             'nonce' => $date->getTimestamp(),
-            'merchant_id' => 1
+            'merchant_id' => 3
         );
         $s = hash_hmac('sha256', base64_encode(JSON_encode($parameters)), $secret, true);
         $signature = preg_replace('/\s+/', '', base64_encode($s));
@@ -149,9 +165,11 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
         $data = array(
             'total_price' => $order_amount,
             'currency' => 'CAD',
-            'payer_id' => 'mehdi@glsys.com',
+            'payer_id' => $_POST['billing_email'],
             'callback_url' => $callback_url,
-            'cancel_url' => $cancel_url
+            'held_url' => 'http://localhost/netcents_wordpress/held/',
+            'cancel_url' => $cancel_url,
+            'order_id' =>  $order_id
         );
         $this->widget_access_data = preg_replace('/\s+/', '', base64_encode(JSON_encode($data)));
         $url = 'http://localhost:3000/merchant/authorize?api_key=' . $api_key;
@@ -168,6 +186,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
             ),
             CURLOPT_FOLLOWLOCATION => true
         );
+
         curl_setopt_array($ch, $curlOpts);
         $answer = curl_exec($ch);
         $json = json_decode($answer, true);
@@ -182,7 +201,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
 	function process_payment ( $order_id ) {
 		global $woocommerce;
         $order = new WC_Order( $order_id );
-        $access = $this->request_access($order);
+        $access = $this->request_access($order, $order_id);
         if ($access != false) {
             try {
                 return array(
