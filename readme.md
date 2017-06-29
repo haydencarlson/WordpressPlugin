@@ -10,6 +10,8 @@ Installing NetCents Wordpress Plugin
 
 5. Select either NetCents API or Widget and check enable
 
-6. With your API key & Secret key generated on our platform input them into appropriate fields
+6. With your `API key` & `Secret key` generated on our platform input them into appropriate fields
 
 Now when at checkout you will see NetCents or NetCents widget
+
+If you aren't sign up for a Merchant account already you can sign up at : http://merchant.net-cents.com
