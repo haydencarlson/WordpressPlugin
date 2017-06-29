@@ -87,6 +87,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
             }
         }
     }
+
     /* Initialise Gateway Settings Form Fields. */
     public function init_form_fields() {
     	global $woocommerce;
