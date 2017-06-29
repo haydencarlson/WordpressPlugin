@@ -53,6 +53,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
 		</table> <?php
     }
 
+
     function verifyTransaction($invoice_number) {
 	$postData = json_encode(array(
             'invoice_number' => $invoice_number
