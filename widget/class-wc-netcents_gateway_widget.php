@@ -53,18 +53,37 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
 		</table> <?php
     }
 
+    function verifyTransaction($invoice_number) {
+	$postData = json_encode(array(
+            'invoice_number' => $invoice_number
+        ));
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL,"http://localhost:3000/api/v1/wordpress/verify");
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $server_output = curl_exec ($ch);
+        curl_close ($ch);
+        $json = json_decode($server_output, true);
+        return $json;
+    }
+
+
     function callback_handler() {
-	    if (isset($_GET["order_id"])) {
-	        $id = $_GET["order_id"];
+        if (isset($_GET["order_id"])) {
+            $id = $_GET["order_id"];
             $order = wc_get_order( $id );
-            $order->payment_complete();
-            $order->update_status( 'completed' );
-            if ($_GET["status"] == 1) {
-                header('Location:'. $this->get_return_url( $order ));
-                exit();
-            } else {
-                header('Location:'. esc_url_raw( $order->get_cancel_order_url_raw()));
-                exit();
+	    $verifyTransaction = $this->verifyTransaction($_GET['invoice_number']);
+	    if ($verifyTransaction['status'] == 1) {
+              $order->payment_complete();
+              $order->update_status( 'completed' );
+              header('Location:'. $this->get_return_url( $order ));
+              exit();
+	    } else {
+              header('Location:'. esc_url_raw( $order->get_cancel_order_url_raw()));
+              exit();
             }
         }
     }
