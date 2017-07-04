@@ -3,7 +3,7 @@
 Plugin Name: NetCents Payment Gateway
 Plugin URI:
 Description: Net-Cents Woocommerce Payment Gateway. If you haven't set up your account please start here : <a>http://merchant.net-cents.com</a>
-Version: 1.0.0
+Version: 1.0.2
 Author: NetCents
 Author URI: http://net-cents.com
 License: GPLv2
