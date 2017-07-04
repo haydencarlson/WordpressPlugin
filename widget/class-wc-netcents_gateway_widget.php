@@ -58,7 +58,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
             'invoice_number' => $invoice_number
         ));
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL,"http://localhost:3000/api/v1/wordpress/verify");
+        curl_setopt($ch, CURLOPT_URL,"https://merchant.net-cents.com/api/v1/wordpress/verify");
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
@@ -170,7 +170,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
 
     function request_access ( $order, $order_id ) {
         $cancel_url = esc_url_raw( $order->get_cancel_order_url_raw());
-        $callback_url = 'http://localhost/netcents_wordpress/?wc-api=wc_custom_payment_gateway_2&';
+        $callback_url = 'https://' . $_SERVER['HTTP_HOST'] . '/?wc-api=wc_custom_payment_gateway_2&';
         $api_key = $this->api_key;
         $secret = $this->secret_key;
         $order_amount = $order->get_total();
@@ -187,12 +187,12 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
             'currency' => 'CAD',
             'payer_id' => $_POST['billing_email'],
             'callback_url' => $callback_url,
-            'held_url' => 'http://localhost/netcents_wordpress/held/',
+            'held_url' => 'http://'. $_SERVER['HTTP_HOST'] . '/held/',
             'cancel_url' => $cancel_url,
             'order_id' =>  $order_id
         );
         $this->widget_access_data = preg_replace('/\s+/', '', base64_encode(JSON_encode($data)));
-        $url = 'http://localhost:3000/merchant/authorize?api_key=' . $api_key;
+        $url = 'https://merchant.net-cents.com/merchant/authorize?api_key=' . $api_key;
 
         $ch = curl_init();
         $curlOpts = array(
@@ -226,7 +226,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
             try {
                 return array(
                     'result' => 'success',
-                    'redirect' => 'http://localhost:3000/merchant/checkout?token=' . $access . '&data=' . $this->widget_access_data . '&api_key=' . $this->api_key
+                    'redirect' => 'https://merchant.net-cents.com/merchant/checkout?token=' . $access . '&data=' . $this->widget_access_data . '&api_key=' . $this->api_key
                 );
             } catch (Exception $ex) {
                 wc_add_notice(  $ex->getMessage(), 'error' );

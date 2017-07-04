@@ -191,7 +191,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
             'transaction_id' => $transaction_id
         ));
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL,"http://localhost:3000/api/v1/wordpress_refund");
+        curl_setopt($ch, CURLOPT_URL,"https://merchant.net-cents.com/api/v1/wordpress_refund");
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
@@ -243,10 +243,11 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
                 'ccv' => $postData['ncgw1-card-cvc']
             ),
             'invoice_number' => '1',
-            'amount' => $order_amount
+            'amount' => $order_amount,
+	    'endpoint' => 'Wordpress'
         ));
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "http://localhost:3000/api/v1/payment");
+        curl_setopt($ch, CURLOPT_URL, "https://merchant.net-cents.com/api/v1/payment");
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
