@@ -1,6 +1,6 @@
 Installing NetCents Wordpress Plugin
 
-1. Clone repsitory and upload to zip file to wordpress plugin section
+1. Clone repository and upload to zip file to wordpress plugin section
 
 2. You must have woocommerce installed in order to use NetCents gateway
 
