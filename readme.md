@@ -1,4 +1,9 @@
-Installing NetCents Wordpress Plugin
+## Index:
+1. [Installation](#installation)
+2. [Widget](#widget)
+
+
+##Installation
 
 1. Clone repository and upload to zip file to wordpress plugin section
 
@@ -12,6 +17,21 @@ Installing NetCents Wordpress Plugin
 
 6. With your `API key` & `Secret key` generated on our platform input them into appropriate fields
 
+To finish setting up widget see next section. API credit card form will work after inserting API keys.
+
 Now when at checkout you will see NetCents or NetCents widget
 
 If you aren't sign up for a Merchant account already you can sign up at : http://merchant.net-cents.com
+
+
+
+## Widget:
+
+1. Create a new widget in your account
+
+2. After creating your widget take down the merchant widget id and put in the plugins text field in same section where you entered your API key and Secret key
+
+3. Start processing
+
+
+
