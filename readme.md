@@ -3,7 +3,7 @@
 2. [Widget](#widget)
 
 
-##Installation
+## Installation
 
 1. Clone repository and upload to zip file to wordpress plugin section
 
