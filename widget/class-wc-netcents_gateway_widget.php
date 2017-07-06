@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 /**
  * WC wcCpg2 Gateway Class.
