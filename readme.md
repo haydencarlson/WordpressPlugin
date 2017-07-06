@@ -1,6 +1,7 @@
 ## Index:
 1. [Installation](#installation)
 2. [Widget](#widget)
+2. [Contributing](#contributing)
 
 
 ## Installation
@@ -33,5 +34,10 @@ If you aren't sign up for a Merchant account already you can sign up at : http:/
 
 3. Start processing
 
+## Contributing
 
+1. Fork the repo
 
+2. Make changes
+
+3. Make pull request
