@@ -3,7 +3,7 @@
  * WC wcCpg1 Gateway Class.
  * Built the wcCpg1 method.
  */
-class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
+class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
 
 
     /**
@@ -18,7 +18,6 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
         $this->icon           = '';
         $this->has_fields     = true;
         $this->method_title   = __( 'Custom Gateway Merchant API', 'ncgwApi' );
-        $this->supports[] = 'default_credit_card_form';
         // Load the form fields.
         $this->init_form_fields();
 
@@ -65,10 +64,6 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
             return false;
         }
 
-    }
-
-    function payment_fields() {
-        $this->credit_card_form();
     }
 
     /* Initialise Gateway Settings Form Fields. */
@@ -124,7 +119,11 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
             'card-expiry'   => isset( $_POST['ncgw1-card-expiry'] ) ? $_POST['ncgw1-card-expiry'] : '',
             'card-cvc'      => isset( $_POST['ncgw1-card-cvc'] ) ? $_POST['ncgw1-card-cvc'] : '',
         );
-
+        
+        if ( ! $this->is_valid_luhn($form['card-number'])) {
+            $field = __( 'Credit Card Number', 'beanstream-for-woocommerce' );
+            wc_add_notice( $this->get_form_error_message( $field, 'invalid' ), 'error');
+        }
         if ( $form['card-number'] == '' ) {
             $field = __( 'Credit Card Number', 'beanstream-for-woocommerce' );
             wc_add_notice( $this->get_form_error_message( $field, $form['card-number'] ), 'error' );
@@ -138,7 +137,18 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
             wc_add_notice( $this->get_form_error_message( $field, $form['card-cvc'] ), 'error' );
         }
     }
-
+    
+    // Verify the creditcard number via the Luhn algorithm
+    public function is_valid_luhn($num) {
+        $num = preg_replace('/[^\d]/', '', $num);
+        $sum = '';
+        
+        for ($i = strlen($num) - 1; $i >= 0; -- $i) {
+            $sum .= $i & 1 ? $num[$i] : $num[$i] * 2;
+        }
+        return array_sum(str_split($sum)) % 10 === 0;
+    }
+    
     protected function get_form_error_message( $field, $type = 'undefined' ) {
 
         if ( $type === 'invalid' ) {
@@ -153,7 +163,8 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
         $order = new WC_Order( $order_id );
 		global $woocommerce;
         $order_amount = $order->get_total();
-        $payment_attempt = $this->attempt_payment($order_amount, $_POST);
+        $order_currency = $order->get_order_currency();
+        $payment_attempt = $this->attempt_payment($order_amount, $order_currency, $_POST);
         if ($payment_attempt != false) {
             wc_add_notice( __('Payment error: ', 'woothemes') . $payment_attempt['message'], 'error' );
             return;
@@ -169,7 +180,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
 
 	}
 
-    function attempt_payment ($order_amount, $postData) {
+    function attempt_payment ($order_amount, $order_currency, $postData) {
         $number = str_replace(' ', '', $postData['ncgw1-card-number']);
         $date = array_map('trim', explode('/', $postData['ncgw1-card-expiry']));
         $api_key = $this->api_key;
@@ -185,7 +196,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway {
             'zip' => $postData['billing_postcode'],
             'phone' => $postData['billing_phone'],
             'ip' => $_SERVER['REMOTE_ADDR'],
-            'currency' => "CAD",
+            'currency' => $order_currency,
             'card' => array(
                 'number' => $number,
                 'expiry_month' => $date[0],
