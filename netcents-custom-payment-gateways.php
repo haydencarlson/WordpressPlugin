@@ -6,7 +6,6 @@ Description: Net-Cents Woocommerce Payment Gateway. If you haven't set up your a
 Version: 1.0.2
 Author: NetCents
 Author URI: http://net-cents.com
-License: GPLv2
 */
 
 //Additional links on the plugin page
