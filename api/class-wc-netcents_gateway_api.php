@@ -215,12 +215,16 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
         curl_setopt($ch, CURLOPT_USERPWD, $api_key . ":" . $secret_key);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $server_output = curl_exec ($ch);
-        curl_close ($ch);
-        $json = json_decode($server_output, true);
-        if ($json['status'] == 0) {
-            return $json;
-        }
-        return false;
+	$server_error = curl_error($ch);
+	curl_close($ch);
+	$json = json_decode($server_output, true);
+	if ($server_error) {
+	  $json['curl_error'] = $server_error;
+	}
+	if ($json['status'] == 200) {
+	 return false;
+	}
+	return $json;
     }
     /* Output for the order received page.   */
 	function thankyou() {
