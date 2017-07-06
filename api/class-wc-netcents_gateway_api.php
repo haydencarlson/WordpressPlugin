@@ -165,7 +165,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
         $order_amount = $order->get_total();
         $order_currency = $order->get_order_currency();
         $payment_attempt = $this->attempt_payment($order_amount, $order_currency, $_POST);
-        if ($payment_attempt != false) {
+        if ($payment_attempt['status'] != 200) {
             wc_add_notice( __('Payment error: ', 'woothemes') . $payment_attempt['message'], 'error' );
             return;
         } else {
@@ -220,9 +220,6 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
 	$json = json_decode($server_output, true);
 	if ($server_error) {
 	  $json['curl_error'] = $server_error;
-	}
-	if ($json['status'] == 200) {
-	 return false;
 	}
 	return $json;
     }
