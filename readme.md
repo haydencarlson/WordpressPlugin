@@ -1,4 +1,5 @@
 ## Index:
+
 1. [Installation](#installation)
 2. [Widget](#widget)
 2. [Contributing](#contributing)
