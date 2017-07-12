@@ -17,7 +17,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
         $this->id             = 'ncgw1';
         $this->icon           = '';
         $this->has_fields     = true;
-        $this->method_title   = __( 'Custom Gateway Merchant API', 'ncgwApi' );
+        $this->method_title   = __( 'NetCents API', 'ncgwApi' );
         // Load the form fields.
         $this->init_form_fields();
 
