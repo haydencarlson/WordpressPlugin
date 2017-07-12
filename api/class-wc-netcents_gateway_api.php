@@ -189,6 +189,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
         $postData = json_encode(array(
             'first_name' => $postData['billing_first_name'],
             'last_name' => $postData['billing_last_name'],
+            'endpoint' => 'Wordpress API',
             'email' => $postData['billing_email'],
             'address' => $postData['billing_address_1'],
             'city' => $postData['billing_city'],
@@ -208,7 +209,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
             'amount' => $order_amount
         ));
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL,"http://localhost:3000/api/v1/payment");
+        curl_setopt($ch, CURLOPT_URL,"https://merchant.net-cents.com/api/v1/payment");
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
