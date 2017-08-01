@@ -3,7 +3,7 @@
  * WC wcCpg2 Gateway Class.
  * Built the wcCpg2 method.
  */
-class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
+class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
 
     /**
      * Constructor for the gateway.
@@ -171,7 +171,7 @@ class WC_Custom_Payment_Gateway_2 extends WC_Payment_Gateway {
 
     function request_access ( $order, $order_id ) {
         $cancel_url = esc_url_raw( $order->get_cancel_order_url_raw());
-        $callback_url = $_SERVER['HTTP_REFERER'] . '/?wc-api=wc_custom_payment_gateway_2&';
+        $callback_url = $_SERVER['HTTP_REFERER'] . '/?wc-api=nc_widget_payment_gateway&';
         $api_key = $this->api_key;
         $secret = $this->secret_key;
         $order_amount = $order->get_total();
