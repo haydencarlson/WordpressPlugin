@@ -46,7 +46,7 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
     }
 
     function verifyTransaction($invoice_number) {
-	$postData = json_encode(array(
+	     $postData = json_encode(array(
             'invoice_number' => $invoice_number
         ));
         $ch = curl_init();
@@ -64,13 +64,18 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
 
 
     function callback_handler() {
+       echo "<script>console.log( 'Debug Objects: " . $_GET["order_id"] . "' );</script>";
         if (isset($_GET["order_id"])) {
             $id = $_GET["order_id"];
             $order = wc_get_order( $id );
+            print_r($order);
 	    $verifyTransaction = $this->verifyTransaction($_GET['invoice_number']);
+
+      print_r($verifyTransaction);
 	    if ($verifyTransaction['status'] == 1) {
               $order->payment_complete();
               $order->update_status( 'completed' );
+              print_r( $this->get_return_url( $order ));
               header('Location:'. $this->get_return_url( $order ));
               exit();
 	    } else {
@@ -101,7 +106,7 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
             'title' => array(
                 'title' => __( 'Title', 'wcwcCpg2' ),
                 'type' => 'text',
-                'description' => __( 'This controls the title which the user sees during checkout.', 'wcwcCpg2' ),
+                'description' => __( 'This controls the title which the user sees dur4242424242424424ing checkout.', 'wcwcCpg2' ),
                 'desc_tip' => true,
                 'default' => __( 'NetCents', 'wcwcCpg2' )
             ),
@@ -162,7 +167,7 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
 
     function request_access ( $order, $order_id ) {
         $cancel_url = esc_url_raw( $order->get_cancel_order_url_raw());
-        $callback_url = $_SERVER['HTTP_REFERER'] . '/?wc-api=nc_widget_payment_gateway&';
+        $callback_url = get_bloginfo('url') . '/?wc-api=nc_widget_payment_gateway';
         $api_key = $this->api_key;
         $secret = $this->secret_key;
         $order_amount = $order->get_total();
