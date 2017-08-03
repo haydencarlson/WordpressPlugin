@@ -1,15 +1,6 @@
 <?php
-/**
- * WC wcCpg2 Gateway Class.
- * Built the wcCpg2 method.
- */
 class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
 
-    /**
-     * Constructor for the gateway.
-     *
-     * @return void
-     */
     public function __construct() {
         global $woocommerce;
 

@@ -38,7 +38,7 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
     /* Admin Panel Options.*/
 	function admin_options() {
 		?>
-		<h3><?php _e('Pay with Custom API','wcwcCpg1'); ?></h3>
+		<h3><?php _e('Pay with Custom API','ncgw1'); ?></h3>
     	<table class="form-table">
     		<?php $this->generate_settings_html(); ?>
 		</table> <?php
@@ -70,35 +70,35 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
 
         $this->form_fields = array(
             'enabled' => array(
-                'title' => __( 'Enable/Disable', 'wcwcCpg1' ),
+                'title' => __( 'Enable/Disable', 'ncgw1' ),
                 'type' => 'checkbox',
-                'label' => __( 'Enable your gateway API Payment Method', 'wcwcCpg1' ),
+                'label' => __( 'Enable your gateway API Payment Method', 'ncgw1' ),
                 'default' => 'no'
             ),
             'title' => array(
-                'title' => __( 'Title', 'wcwcCpg1' ),
+                'title' => __( 'Title', 'ncgw1' ),
                 'type' => 'text',
-                'description' => __( 'This controls the title which the user sees during checkout.', 'wcwcCpg1' ),
+                'description' => __( 'This controls the title which the user sees during checkout.', 'ncgw1' ),
                 'desc_tip' => true,
-                'default' => __( 'NetCents Credit Card', 'wcwcCpg1' )
+                'default' => __( 'NetCents Credit Card', 'ncgw1' )
             ),
             'description' => array(
-                'title' => __( 'Description', 'wcwcCpg1' ),
+                'title' => __( 'Description', 'ncgw1' ),
                 'type' => 'textarea',
-                'description' => __( 'This controls the description which the user sees during checkout.', 'wcwcCpg1' ),
-                'default' => __( 'Description for API payment method.', 'wcwcCpg1' )
+                'description' => __( 'This controls the description which the user sees during checkout.', 'ncgw1' ),
+                'default' => __( 'Description for API payment method.', 'ncgw1' )
             ),
 			'api-key' => array(
-				'title' => __( 'API Key', 'wcwcCpg1' ),
+				'title' => __( 'API Key', 'ncgw1' ),
 				'type' => 'text',
-				'description' => __( 'Your API key.', 'wcwcCpg1' ),
-				'default' => __( '', 'wcwcCpg1' )
+				'description' => __( 'Your API key.', 'ncgw1' ),
+				'default' => __( '', 'ncgw1' )
 			),
             'secret-key' => array(
-				'title' => __( 'Secret Key', 'wcwcCpg1' ),
+				'title' => __( 'Secret Key', 'ncgw1' ),
 				'type' => 'text',
-				'description' => __( 'Your Secret key.', 'wcwcCpg1' ),
-				'default' => __( '', 'wcwcCpg1' )
+				'description' => __( 'Your Secret key.', 'ncgw1' ),
+				'default' => __( '', 'ncgw1' )
 			)
         );
     }
@@ -152,12 +152,11 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
     /* Process the payment and return the result. */
 	function process_payment ($order_id) {
         $order = new WC_Order( $order_id );
-		global $woocommerce;
+		    global $woocommerce;
         $order_amount = $order->get_total();
         $order_currency = $order->get_currency();
         $payment_attempt = $this->attempt_payment($order_amount, $order_currency, $_POST);
 
-        echo 'asdajsduh78hHG7GH7SGD78HGA78SGD8GHASGD';
         if (!isset($payment_attempt["status"]) || $payment_attempt["status"] != 200) {
             wc_add_notice( __('Payment error: ', 'woothemes') . $payment_attempt['message'], 'error' );
             return;
@@ -203,7 +202,7 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
         ));
 
         $key = base64_encode( "{$api_key}:{$secret_key}" );
-        $request = wp_remote_post('http://localhost:3000/api/v1/payment', array(
+        $request = wp_remote_post('https://merchant.net-cents.com/api/v1/payment', array(
         	'headers' => array(
         		'Authorization' => "Basic {$key}",
         		'Content-Type' => 'application/json'
