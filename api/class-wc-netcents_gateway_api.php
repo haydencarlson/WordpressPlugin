@@ -3,7 +3,7 @@
  * WC wcCpg1 Gateway Class.
  * Built the wcCpg1 method.
  */
-class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
+class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
 
 
     /**
@@ -76,7 +76,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
 	    	foreach ( $woocommerce->shipping->load_shipping_methods() as $method ) {
 		    	$shipping_methods[ $method->id ] = $method->get_title();
 	    	}
-			
+
         $this->form_fields = array(
             'enabled' => array(
                 'title' => __( 'Enable/Disable', 'wcwcCpg1' ),
@@ -119,7 +119,7 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
             'card-expiry'   => isset( $_POST['ncgw1-card-expiry'] ) ? $_POST['ncgw1-card-expiry'] : '',
             'card-cvc'      => isset( $_POST['ncgw1-card-cvc'] ) ? $_POST['ncgw1-card-cvc'] : '',
         );
-        
+
         if ( ! $this->is_valid_luhn($form['card-number'])) {
             $field = __( 'Credit Card Number', 'beanstream-for-woocommerce' );
             wc_add_notice( $this->get_form_error_message( $field, 'invalid' ), 'error');
@@ -137,18 +137,18 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
             wc_add_notice( $this->get_form_error_message( $field, $form['card-cvc'] ), 'error' );
         }
     }
-    
+
     // Verify the creditcard number via the Luhn algorithm
     public function is_valid_luhn($num) {
         $num = preg_replace('/[^\d]/', '', $num);
         $sum = '';
-        
+
         for ($i = strlen($num) - 1; $i >= 0; -- $i) {
             $sum .= $i & 1 ? $num[$i] : $num[$i] * 2;
         }
         return array_sum(str_split($sum)) % 10 === 0;
     }
-    
+
     protected function get_form_error_message( $field, $type = 'undefined' ) {
 
         if ( $type === 'invalid' ) {
@@ -163,8 +163,10 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
         $order = new WC_Order( $order_id );
 		global $woocommerce;
         $order_amount = $order->get_total();
-        $order_currency = $order->get_order_currency();
+        $order_currency = $order->get_currency();
         $payment_attempt = $this->attempt_payment($order_amount, $order_currency, $_POST);
+
+        echo 'asdajsduh78hHG7GH7SGD78HGA78SGD8GHASGD';
         if (!isset($payment_attempt["status"]) || $payment_attempt["status"] != 200) {
             wc_add_notice( __('Payment error: ', 'woothemes') . $payment_attempt['message'], 'error' );
             return;
@@ -208,23 +210,25 @@ class WC_Custom_Payment_Gateway_1 extends WC_Payment_Gateway_CC {
             'invoice_number' => '1',
             'amount' => $order_amount
         ));
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL,"https://merchant.net-cents.com/api/v1/payment");
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_USERPWD, $api_key . ":" . $secret_key);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $server_output = curl_exec ($ch);
-	$server_error = curl_error($ch);
-	curl_close($ch);
-	$json = json_decode($server_output, true);
-	if ($server_error) {
-	  $json['curl_error'] = $server_error;
-	}
-	return $json;
+
+        $key = base64_encode( "{$api_key}:{$secret_key}" );
+        $request = wp_remote_post('http://localhost:3000/api/v1/payment', array(
+        	'headers' => array(
+        		'Authorization' => "Basic {$key}",
+        		'Content-Type' => 'application/json'
+        	),
+        	'body' => $postData
+        ));
+
+        $json = json_decode($request['body'], true);
+        if (is_wp_error($request)) {
+          $json['curl_error'] = $response->get_error_message();
+        }
+
+        return $json;
+
     }
+
     /* Output for the order received page.   */
 	function thankyou() {
 		echo $this->instructions != '' ? wpautop( $this->instructions ) : '';

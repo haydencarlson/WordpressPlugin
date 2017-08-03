@@ -3,7 +3,7 @@
 Plugin Name: NetCents Payment Gateway
 Plugin URI: https://github.com/NetCents/WordpressPlugin
 Description: Net-Cents Woocommerce Payment Gateway. If you haven't set up your account please start here : <a>http://merchant.net-cents.com</a>
-Version: 1.0.2
+Version: 1.0.4
 Author: NetCents
 Author URI: http://net-cents.com
 */
@@ -20,7 +20,7 @@ function nc_register_plugin_links($links, $file) {
 
 /* WooCommerce fallback notice. */
 function nc_plugin_dependencies() {
-    echo '<div class="error"><p>' . sprintf( __( 'WooCommerce Net-Cents Gateways depends on the last version of %s to work!', 'wcCpg' ), '<a href="http://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>' ) . '</p></div>';
+    echo '<div class="error"><p>' . sprintf( __( 'WooCommerce Net-Cents Gateways depends on the last version of %s to work!', 'nc' ), '<a href="http://wordpress.org/extend/plugins/woocommerce/">WooCommerce</a>' ) . '</p></div>';
 }
 
 /* Load functions. */

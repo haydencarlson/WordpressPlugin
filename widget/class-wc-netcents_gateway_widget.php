@@ -34,8 +34,8 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
         $this->callback_url    = $this->settings['callback-url'];
     		$this->instructions       = $this->get_option( 'instructions' );
     		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
-    		$this->widget_access_data;
-    		$this->widget_access_token;
+    		$this->widget_access_data = '';
+    		$this->widget_access_token = '';
 
         // Actions.
         add_action('woocommerce_api_'.strtolower(get_class($this)), array(&$this, 'callback_handler'));
