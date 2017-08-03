@@ -112,7 +112,7 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
                 'type' => 'text',
                 'description' => __( 'This controls the title which the user sees during checkout.', 'wcwcCpg2' ),
                 'desc_tip' => true,
-                'default' => __( 'Custom Widget Payment', 'wcwcCpg2' )
+                'default' => __( 'NetCents', 'wcwcCpg2' )
             ),
             'description' => array(
                 'title' => __( 'Description', 'wcwcCpg2' ),

@@ -1,16 +1,7 @@
 <?php
-/**
- * WC wcCpg1 Gateway Class.
- * Built the wcCpg1 method.
- */
+
 class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
 
-
-    /**
-     * Constructor for the gateway.
-     *
-     * @return void
-     */
     public function __construct() {
         global $woocommerce;
 
@@ -29,8 +20,8 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
         $this->description    = $this->settings['description'];
         $this->api_key    = $this->settings['api-key'];
         $this->secret_key    = $this->settings['secret-key'];
-		$this->instructions       = $this->get_option( 'instructions' );
-		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
+		    $this->instructions       = $this->get_option( 'instructions' );
+		    $this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
 
         // Actions.
         if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) )
@@ -89,7 +80,7 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
                 'type' => 'text',
                 'description' => __( 'This controls the title which the user sees during checkout.', 'wcwcCpg1' ),
                 'desc_tip' => true,
-                'default' => __( 'Your API Gateway', 'wcwcCpg1' )
+                'default' => __( 'NetCents Credit Card', 'wcwcCpg1' )
             ),
             'description' => array(
                 'title' => __( 'Description', 'wcwcCpg1' ),
