@@ -156,7 +156,7 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
         $order_amount = $order->get_total();
         $order_currency = $order->get_currency();
         $payment_attempt = $this->attempt_payment($order_amount, $order_currency, $_POST);
-
+	print_r($payment_attempt);
         if (!isset($payment_attempt["status"]) || $payment_attempt["status"] != 200) {
             wc_add_notice( __('Payment error: ', 'woothemes') . $payment_attempt['message'], 'error' );
             return;
@@ -195,6 +195,7 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
                 'number' => $number,
                 'expiry_month' => $date[0],
                 'expiry_year' => $date[1],
+
                 'ccv' => $postData['ncgw1-card-cvc']
             ),
             'invoice_number' => '1',
@@ -207,10 +208,14 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
         		'Authorization' => "Basic {$key}",
         		'Content-Type' => 'application/json'
         	),
-        	'body' => $postData
+        	'body' => $postData,
+		'timeout' => 45
         ));
 
+	var_dump($request);
         $json = json_decode($request['body'], true);
+	var_dump($json);
+
         if (is_wp_error($request)) {
           $json['curl_error'] = $response->get_error_message();
         }
