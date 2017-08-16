@@ -74,7 +74,7 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
 
         // Check for API Keys
         if ( ! $this->settings['api-key'] && ! $this->settings['secret-key'] ) {
-            echo '<div class="error"><p>' . __( 'You need the API Key & Secret Key in order to work, please find your API key and Secret at <a href="https://www.google.com.com" target="_blank">Custom Gateway Authentication Keys</a>.', 'beanstream-for-woocommerce' ) . '</p></div>';
+            echo '<div class="error"><p>' . __( 'You need the API Key & Secret Key in order to work, please find your API key and Secret at <a href="https://merchant.net-cents.com" target="_blank">Custom Gateway Authentication Keys</a>.', 'beanstream-for-woocommerce' ) . '</p></div>';
             return false;
         }
 
