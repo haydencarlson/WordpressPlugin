@@ -46,19 +46,16 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
     }
 
     function callback_handler() {
-
-      if (isset($_GET['order_id']) && isset($_GET['api_key'])) {
+      if (isset($_GET['order_id']) && isset($_POST['api_key'])) {
         $id = $_GET["order_id"];
-        $api_check = $_GET['api_key'] == $this->api_key;
+        $api_check = $_POST['api_key'] == $this->api_key;
         if ($api_check) {
           $order = wc_get_order( $id );
           $order->update_status( 'completed' );
-          wp_redirect(get_home_url());
+          http_response_code(200);
         } else {
-          die();
+          http_response_code(400);
         }
-      } else {
-        wp_redirect(get_home_url());
       }
     }
 
