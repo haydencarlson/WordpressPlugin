@@ -52,9 +52,17 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
         if ($api_check) {
           $order = wc_get_order( $id );
           $order->update_status( 'completed' );
-          http_response_code(200);
+          $response = array (
+              'status' => 200
+            );
+          echo json_encode($response);
+          exit();
         } else {
-          http_response_code(400);
+          $response = array (
+            'status' => 400
+          );
+          echo json_encode($response);
+          exit();
         }
       }
     }
