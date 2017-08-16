@@ -68,14 +68,10 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
         if (isset($_GET["order_id"])) {
             $id = $_GET["order_id"];
             $order = wc_get_order( $id );
-            print_r($order);
 	    $verifyTransaction = $this->verifyTransaction($_GET['invoice_number']);
-
-      print_r($verifyTransaction);
 	    if ($verifyTransaction['status'] == 1) {
               $order->payment_complete();
               $order->update_status( 'completed' );
-              print_r( $this->get_return_url( $order ));
               header('Location:'. $this->get_return_url( $order ));
               exit();
 	    } else {
