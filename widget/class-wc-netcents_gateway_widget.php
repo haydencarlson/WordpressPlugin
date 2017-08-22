@@ -22,7 +22,6 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
         $this->api_key    = $this->settings['api-key'];
         $this->secret_key    = $this->settings['secret-key'];
         $this->merchant_id    = $this->settings['merchant-id'];
-        $this->callback_url    = $this->settings['callback-url'];
     		$this->instructions       = $this->get_option( 'instructions' );
     		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
     		$this->widget_access_data = '';
