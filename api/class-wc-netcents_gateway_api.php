@@ -225,7 +225,7 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
         ));
 
         $key = base64_encode( "{$api_key}:{$secret_key}" );
-        $request = wp_remote_post('http://localhost:3000/api/v1/payment', array(
+        $request = wp_remote_post('https://merchant.net-cents.com/api/v1/payment', array(
         	'headers' => array(
         		'Authorization' => "Basic {$key}",
         		'Content-Type' => 'application/json'
