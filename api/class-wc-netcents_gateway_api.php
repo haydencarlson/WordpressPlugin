@@ -179,6 +179,7 @@ class NC_Api_Payment_Gateway extends WC_Payment_Gateway_CC {
         $order_amount = $order->get_total();
         $order_currency = $order->get_currency();
         $payment_attempt = $this->attempt_payment($order_amount, $order_currency, $_POST, $order_id);
+	var_dump($payment_attempt);
         if (!isset($payment_attempt["status"]) || $payment_attempt["status"] != 200) {
             wc_add_notice( __('Payment error: ', 'woothemes') . $payment_attempt['message'], 'error' );
             return;
