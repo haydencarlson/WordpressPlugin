@@ -1,39 +1,39 @@
 <?php
 class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
 
-    public function __construct() {
-        global $woocommerce;
+  public function __construct() {
+      global $woocommerce;
 
-        $this->id             = 'ncgw2';
-        $this->icon           = apply_filters( 'woocommerce_wcCpg2_icon', '' );
-        $this->has_fields     = false;
-        $this->method_title   = __( 'NetCents Widget', 'wcwcCpg2' );
-        $this->order_button_text  = __( 'Proceed to NetCents Gateway ', 'woocommerce' );
+      $this->id             = 'ncgw2';
+      $this->icon           = apply_filters( 'woocommerce_wcCpg2_icon', '' );
+      $this->has_fields     = false;
+      $this->method_title   = __( 'NetCents Widget', 'wcwcCpg2' );
+      $this->order_button_text  = __( 'Proceed to NetCents Gateway ', 'woocommerce' );
 
-        // Load the form fields.
-        $this->init_form_fields();
+      // Load the form fields.
+      $this->init_form_fields();
 
-        // Load the settings.
-        $this->init_settings();
+      // Load the settings.
+      $this->init_settings();
 
-        // Define user set variables.
-        $this->title          = $this->settings['title'];
-        $this->description    = $this->settings['description'];
-        $this->api_key    = $this->settings['api-key'];
-        $this->secret_key    = $this->settings['secret-key'];
-        $this->merchant_id    = $this->settings['merchant-id'];
-    		$this->instructions       = $this->get_option( 'instructions' );
-    		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
-    		$this->widget_access_data = '';
-    		$this->widget_access_token = '';
+      // Define user set variables.
+      $this->title          = $this->settings['title'];
+      $this->description    = $this->settings['description'];
+      $this->api_key    = $this->settings['api-key'];
+      $this->secret_key    = $this->settings['secret-key'];
+      $this->merchant_id    = $this->settings['merchant-id'];
+  		$this->instructions       = $this->get_option( 'instructions' );
+  		$this->enable_for_methods = $this->get_option( 'enable_for_methods', array() );
+  		$this->widget_access_data = '';
+  		$this->widget_access_token = '';
 
-        // Actions.
-        add_action('woocommerce_api_'.strtolower(get_class($this)), array(&$this, 'callback_handler'));
-        if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) )
-            add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( &$this, 'process_admin_options' ) );
-        else
-            add_action( 'woocommerce_update_options_payment_gateways', array( &$this, 'process_admin_options' ) );
-    }
+      // Actions.
+      add_action('woocommerce_api_'.strtolower(get_class($this)), array(&$this, 'callback_handler'));
+      if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) )
+        add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( &$this, 'process_admin_options' ) );
+      else
+        add_action( 'woocommerce_update_options_payment_gateways', array( &$this, 'process_admin_options' ) );
+  }
 
     /* Admin Panel Options.*/
 	function admin_options() {
@@ -44,41 +44,41 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
 		</table> <?php
     }
 
-    function verifyTransaction($invoice_number) {
-	     $postData = json_encode(array(
-            'invoice_number' => $invoice_number
-        ));
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL,"https://merchant.net-cents.com/api/v1/wordpress/verify");
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $server_output = curl_exec ($ch);
-        curl_close ($ch);
-        $json = json_decode($server_output, true);
-        return $json;
-    }
-
-
     function callback_handler() {
-       echo "<script>console.log( 'Debug Objects: " . $_GET["order_id"] . "' );</script>";
-        if (isset($_GET["order_id"])) {
-            $id = $_GET["order_id"];
-            $order = wc_get_order( $id );
-	    $verifyTransaction = $this->verifyTransaction($_GET['invoice_number']);
-	    if ($verifyTransaction['status'] == 1) {
-              $order->payment_complete();
-              $order->update_status( 'completed' );
-              header('Location:'. $this->get_return_url( $order ));
-              exit();
-	    } else {
-              header('Location:'. esc_url_raw( $order->get_cancel_order_url_raw()));
-              exit();
-            }
+
+     	if ($_GET['signature'] && $_GET['signing'] && $_GET['data']) {
+        $signature = $_GET['signature'];
+        $exploded_parts = explode(",", $signature);
+        $timestamp = explode("=", $exploded_parts[0])[1];
+        $signature = explode("=", $exploded_parts[1])[1];
+        $decoded_data = json_decode(base64_decode(urldecode($_GET['data'])), true);
+        $hashable_payload = $timestamp . '.' . urldecode($_GET['data']);
+        $hash_hmac = hash_hmac("sha256", $hashable_payload, $_GET['signing']);
+        $timestamp_tolerance = 5;
+        $date = new DateTime();
+        $current_timestamp = $date->getTimestamp();
+        $order = wc_get_order( $decoded_data['external_id'] );
+
+        if ($hash_hmac != $signature) {
+          header('Location:'. esc_url_raw( $order->get_cancel_order_url_raw()));
+          exit();
         }
-    }
+
+        if (($current_timestamp - $timestamp) / 60 > $timestamp_tolerance) {
+          header('Location:'. esc_url_raw( $order->get_cancel_order_url_raw()));
+          exit();
+        }
+
+        $order->payment_complete();
+        $order->update_status( 'completed' );
+        header('Location:'. $this->get_return_url( $order ));
+        exit();
+
+	   } else {
+	      header('Location:'. esc_url_raw( $order->get_cancel_order_url_raw()));
+        exit();
+     }
+   }
 
     /* Initialise Gateway Settings Form Fields. */
     public function init_form_fields() {
@@ -138,77 +138,60 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
     }
 
     public function get_cancel_order_url_raw( $redirect = '' ) {
-        return apply_filters( 'woocommerce_get_cancel_order_url_raw', add_query_arg( array(
-            'cancel_order' => 'true',
-            'order'        => $this->get_order_key(),
-            'order_id'     => $this->get_id(),
-            'redirect'     => $redirect,
-            '_wpnonce'     => wp_create_nonce( 'woocommerce-cancel_order' ),
-        ), $this->get_cancel_endpoint() ) );
+      return apply_filters( 'woocommerce_get_cancel_order_url_raw', add_query_arg( array(
+          'cancel_order' => 'true',
+          'order'        => $this->get_order_key(),
+          'order_id'     => $this->get_id(),
+          'redirect'     => $redirect,
+          '_wpnonce'     => wp_create_nonce( 'woocommerce-cancel_order' ),
+      ), $this->get_cancel_endpoint() ) );
     }
 
     public function get_cancel_endpoint() {
-        $cancel_endpoint = wc_get_page_permalink( 'cart' );
+      $cancel_endpoint = wc_get_page_permalink( 'cart' );
 
-        if ( ! $cancel_endpoint ) {
-            $cancel_endpoint = home_url();
-        }
+      if ( ! $cancel_endpoint ) {
+          $cancel_endpoint = home_url();
+      }
 
-        if ( false === strpos( $cancel_endpoint, '?' ) ) {
-            $cancel_endpoint = trailingslashit( $cancel_endpoint );
-        }
-        return $cancel_endpoint;
+      if ( false === strpos( $cancel_endpoint, '?' ) ) {
+          $cancel_endpoint = trailingslashit( $cancel_endpoint );
+      }
+      return $cancel_endpoint;
     }
 
     function request_access ( $order, $order_id ) {
-        $cancel_url = esc_url_raw( $order->get_cancel_order_url_raw());
-        $callback_url = get_bloginfo('url') . '/?wc-api=nc_widget_payment_gateway';
-        $api_key = $this->api_key;
-        $secret = $this->secret_key;
-        $order_amount = $order->get_total();
-        $order_currency = $order->get_order_currency();
-        $merchant_id = $this->merchant_id;
-        $date = new DateTime();
-        $parameters = array(
-            'nonce' => $date->getTimestamp(),
-            'merchant_id' => $merchant_id
-        );
-        $s = hash_hmac('sha256', base64_encode(JSON_encode($parameters)), $secret, true);
-        $signature = preg_replace('/\s+/', '', base64_encode($s));
-        $parameters = preg_replace('/\s+/', '', base64_encode(JSON_encode($parameters)));
-        $data = array(
-            'total_price' => $order_amount,
-            'currency' => $order_currency,
-            'payer_id' => $_POST['billing_email'],
-            'callback_url' => $callback_url,
-            'held_url' => 'http://'. $_SERVER['HTTP_HOST'] . '/held/',
-            'cancel_url' => $cancel_url,
-            'order_id' =>  $order_id
-        );
-        $this->widget_access_data = preg_replace('/\s+/', '', base64_encode(JSON_encode($data)));
-        $url = 'https://merchant.net-cents.com/merchant/authorize?api_key=' . $api_key;
+      $cancel_url = esc_url_raw( $order->get_cancel_order_url_raw());
+      $callback_url = get_bloginfo('url') . '/?wc-api=nc_widget_payment_gateway';
+      $api_key = $this->api_key;
+      $secret = $this->secret_key;
+      $order_amount = $order->get_total();
+      $order_currency = $order->get_order_currency();
+      $merchant_id = $this->merchant_id;
+      $date = new DateTime();
 
-        $ch = curl_init();
-        $curlOpts = array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => array(
-                "Content-Type: application/x-www-form-urlencoded",
-                "Origin: {$_SERVER["HTTP_ORIGIN"]}",
-                "X-Parameters: {$parameters}",
-                "X-Signature: {$signature}"
-            ),
-            CURLOPT_FOLLOWLOCATION => true
-        );
-
-        curl_setopt_array($ch, $curlOpts);
-        $answer = curl_exec($ch);
-        $json = json_decode($answer, true);
-
-        if ($json['access_token'] != '') {
-            return $json['access_token'];
-        }
-        return false;
+      $encrypted_string = wp_remote_post('https://merchant.net-cents.com/api/v1/widget/encrypt/', array(
+      		'method' => 'POST',
+    			'body' => array(
+    				'external_id' => $order_id,
+    				'amount' => $order_amount,
+    				'currency_iso' => $order_currency,
+    				'callback_url' => $callback_url,
+            'merchant_id' => $api_key
+    			),
+    			'headers' => array(
+    				'Authorization' => 'Basic ' . base64_encode( $api_key. ':' . $secret)
+    			)
+      	)
+      );
+	    $decoded_body = json_decode($encrypted_string['body']);
+	    $response = wp_remote_get('https://merchant.net-cents.com/api/v1/widget/authorization?widget_id=' . $merchant_id . '&data=' . $decoded_body->token . '&origin=' . $_SERVER["HTTP_ORIGIN"]);
+      $json_response = json_decode($response['body']);
+	     if ($json_response->status == 200) {
+          return $decoded_body->token;
+	     } else {
+          return false;
+	     }
     }
 
     /* Process the payment and return the result. */
@@ -220,7 +203,7 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
             try {
                 return array(
                     'result' => 'success',
-                    'redirect' => 'https://merchant.net-cents.com/merchant/checkout?token=' . $access . '&data=' . $this->widget_access_data . '&api_key=' . $this->api_key
+                    'redirect' => 'https://merchant.net-cents.com/merchant/widget?data=' . $access . '&widget_id=' . $this->merchant_id
                 );
             } catch (Exception $ex) {
                 wc_add_notice(  $ex->getMessage(), 'error' );
@@ -239,7 +222,5 @@ class NC_Widget_Payment_Gateway extends WC_Payment_Gateway {
 	function thankyou() {
 		echo $this->instructions != '' ? wpautop( $this->instructions ) : '';
 	}
-
-
 
 }
